@@ -4,8 +4,9 @@ import select
 
 HEADER_LENGTH = 10
 
-IP = socket.gethostname()
-PORT = 4321
+# IP = socket.gethostname()
+IP = 'localhost'
+PORT = 54321
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -13,7 +14,7 @@ s.bind((IP, PORT))
 s.listen()
 socketsList = [s]
 clients = {}
-
+playerList = []
 # Handles message receiving
 def receiveMessage(clientSocket):
 
@@ -65,6 +66,12 @@ while True:
 
             clients[clientSocket] = user
             print('Accepted new connection from {}:{}, username: {}'.format(*client_address, user['data'].decode('utf-8')))
+
+            playerList.append({"name": user['data'].decode('utf-8'), "IP": client_address})
+            print(playerList)
+
+
+
 
         else:
 

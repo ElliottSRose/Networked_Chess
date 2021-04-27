@@ -3,8 +3,10 @@ import select
 import errno
 
 HEADER_LENGTH = 10
-IP = socket.gethostname()
-PORT = 4321
+# IP = socket.gethostname()
+IP = 'localhost'
+PORT = 54321
+
 
 player = input("Player: ")
 
