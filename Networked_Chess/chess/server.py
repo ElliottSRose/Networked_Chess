@@ -15,21 +15,10 @@ s.listen()
 socketsList = [s]
 clients = {}
 playerList = []
-# Handles message receiving
-def receiveMessage(clientSocket):
 
-    try:
-
-        messageHeader = clientSocket.recv(HEADER_LENGTH)
-        if not len(messageHeader):
-            return False
-
-        messageLength = int(messageHeader.decode('utf-8').strip())
-        return {'header': messageHeader, 'data': clientSocket.recv(messagelength)}
-
-    except:
-        # socket.close()
-        return False
+def negotiateMessage(clientSocket, message):
+    if message == "Start":
+        clientSocket.send()
 
 def receiveMessage(clientSocket):
 
@@ -50,7 +39,6 @@ while True:
 
     readSockets, _, exceptionSockets = select.select(socketsList, [], socketsList)
 
-
     # Iterate over notified sockets
     for notifiedSocket in readSockets:
         if notifiedSocket == s:
@@ -68,11 +56,13 @@ while True:
             print('Accepted new connection from {}:{}, username: {}'.format(*client_address, user['data'].decode('utf-8')))
 
             playerList.append({"name": user['data'].decode('utf-8'), "IP": client_address})
-            print(playerList)
 
-
-
-
+            for player in playerList:
+                message = "Available Players:\n Player: " + str(player["name"]) + "\n"
+                message = message.encode('utf-8')
+            # messageHeader = f"{len(message):<{HEADER_LENGTH}}".encode('utf-8')
+            # clientSocket.send(messageHeader + message)
+                clientSocket.send(message)
         else:
 
             message = receiveMessage(notifiedSocket)
@@ -89,7 +79,8 @@ while True:
             user = clients[notifiedSocket]
 
             print(f'Received message from {user["data"].decode("utf-8")}: {message["data"].decode("utf-8")}')
-
+            # clientSocket.send(user['header'] + user['data'] + message['header'] + message['data'])
+            negotiateMessage(clientSocket, message)
             for clientSocket in clients:
 
                 if clientSocket != notifiedSocket:

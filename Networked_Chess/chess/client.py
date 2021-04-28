@@ -1,9 +1,10 @@
 import socket
 import select
 import errno
+import sys
 
 HEADER_LENGTH = 10
-# IP = socket.gethostname()
+# IP = socket.gethostname()2
 IP = 'localhost'
 PORT = 54321
 
@@ -21,47 +22,59 @@ playerName = player.encode('utf-8')
 playerHeader = f"{len(playerName):<{HEADER_LENGTH}}".encode('utf-8')
 clientSocket.send(playerHeader + playerName)
 
-while True:
-
+# while True:
+def awaitInput():
     # Wait for user to input a message
     message = input(f'{player} > ')
-
-    # If message is not empty - send it
+# If message is not empty - send it
     if message:
-    
         message = message.encode('utf-8')
         messageHeader = f"{len(message):<{HEADER_LENGTH}}".encode('utf-8')
         clientSocket.send(messageHeader + message)
 
-    try:
-        while True:
+while True:
+    awaitInput()
+    socket_list = [sys.stdin, clientSocket]
 
-            playerHeader = clientSocket.recv(HEADER_LENGTH)
+    # Get the list sockets which are readable
+    read_sockets, write_sockets, error_sockets = select.select(
+        socket_list, [], [])
 
-            if not len(playerHeader):
-                print('Connection closed by the server')
-                sys.exit()
+    for sock in read_sockets:
+        # incoming message from remote server
+        if sock == clientSocket:
+            data = sock.recv(1024)
+            if not data:
+                print('\nDisconnected from server')
+                break
+            else:
+                print(data.decode('utf-8'))
+        else:
+            awaitInput()
 
-            playerLength = int(playerHeader.decode('utf-8').strip())
 
-            playerName = clientSocket.recv(playerLength).decode('utf-8')
-
-            messageHeader = clientSocket.recv(HEADER_LENGTH)
-            messageLength = int(messageHeader.decode('utf-8').strip())
-            message = clientSocket.recv(messageLength).decode('utf-8')
-
-            # Print message
-            print(f'{playerName} > {message}')
-
-    except IOError as e:
-        # If we got different error code - something happened
-        if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
-            print('Reading error: {}'.format(str(e)))
-            sys.exit()
-
-        # We just did not receive anything
-        continue
-
-    except Exception as e:
-        print('Reading error: '.format(str(e)))
-        sys.exit()
+clientSocket.close()
+#     try:
+#         while True:
+#             playerHeader = clientSocket.recv(HEADER_LENGTH)
+#             if not len(playerHeader):
+#                 print('Connection closed by the server')
+#                 sys.exit()
+#             playerLength = int(playerHeader.decode('utf-8').strip())
+#             playerName = clientSocket.recv(playerLength).decode('utf-8')
+#             messageHeader = clientSocket.recv(1024)
+#             messageLength = int(messageHeader.decode('utf-8').strip())
+#             print(messageHeader)
+#             print(f'{playerName} > {message}')
+#     except IOError as e:
+#         # If we got different error code - something happened
+#         if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
+#             print('Reading error: {}'.format(str(e)))
+#             sys.exit()
+#
+#         # We just did not receive anything
+#         continue
+#
+#     except Exception as e:
+#         print('Reading error: '.format(str(e)))
+#         sys.exit()
