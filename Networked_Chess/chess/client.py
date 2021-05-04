@@ -1,3 +1,4 @@
+import board
 import socket
 import select
 import errno
@@ -8,7 +9,7 @@ HEADER_LENGTH = 10
 IP = 'localhost'
 PORT = 54321
 
-
+newGame = board.Board()
 player = input("Player: ")
 
 clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -22,18 +23,26 @@ playerName = player.encode('utf-8')
 playerHeader = f"{len(playerName):<{HEADER_LENGTH}}".encode('utf-8')
 clientSocket.send(playerHeader + playerName)
 
+
+def parseMessage(message, game=newGame):
+    if message[0] == 'G':
+        # update board and print
+        newGame.move(message[1], int(message[2]), message[3], int(message[4]))
+        newGame.printBoard()
+
 # while True:
 def awaitInput():
     # Wait for user to input a message
     message = input(f'{player} > ')
 # If message is not empty - send it
     if message:
+        parseMessage(message)
         message = message.encode('utf-8')
         messageHeader = f"{len(message):<{HEADER_LENGTH}}".encode('utf-8')
         clientSocket.send(messageHeader + message)
 
 while True:
-    awaitInput()
+    # awaitInput()
     socket_list = [sys.stdin, clientSocket]
 
     # Get the list sockets which are readable
@@ -48,10 +57,10 @@ while True:
                 print('\nDisconnected from server')
                 break
             else:
-                print(data.decode('utf-8'))
+                print(data.decode('utf-8')[1:])
+                parseMessage(data.decode('utf-8'))
         else:
             awaitInput()
-
 
 clientSocket.close()
 #     try:
@@ -78,3 +87,11 @@ clientSocket.close()
 #     except Exception as e:
 #         print('Reading error: '.format(str(e)))
 #         sys.exit()
+
+# formatting needs
+# message type: start, connect, game traffic
+#
+# 1. message formatting
+# 2. connect players
+# 3. parse data and make moves
+# 4. disconnect after game end

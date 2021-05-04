@@ -16,9 +16,38 @@ socketsList = [s]
 clients = {}
 playerList = []
 
-def negotiateMessage(clientSocket, message):
-    if message == "Start":
-        clientSocket.send()
+def negotiateMessage(clientSocket, message, playerList):
+    # This function takes our recieved messages, and parses the first letter to identify the traffic type
+    if message[0] == "S":
+
+        for player in playerList:
+
+            message = "Waiting for opponent: " + str(player["name"]) + "\n"
+
+            message = message.encode('utf-8')
+
+            clientSocket.send(message)
+
+    elif message[0] == "C":
+        # get name of opponent
+        opponent = message[1:]
+        # find opponents index
+        opponentIndex = next((i for i, item in enumerate(playerList) if item["name"] == opponent), None)
+        # set opponent's opponent
+        playerList[opponentIndex]['Opp_IP'] = clientSocket
+        # find player's index
+        playerIndex = next((i for i, item in enumerate(playerList) if item["IP"] == clientSocket), None)
+        # set player's opponent
+        playerList[playerIndex]['Opp_IP'] = playerList[opponentIndex]['IP']
+        # Send request message to opponent to start game and start by default
+        playerList[opponentIndex]['IP'].send("Play a game? Type Yes or No".encode('utf-8'))
+    # if no, disconnect players
+    if message[0] =='G':
+
+        playerIndex = next((i for i, item in enumerate(playerList) if item["IP"] == clientSocket), None)
+
+        playerList[playerIndex]['Opp_IP'].send(message.encode('utf-8'))
+
 
 def receiveMessage(clientSocket):
 
@@ -29,7 +58,7 @@ def receiveMessage(clientSocket):
             return False
         messageLength = int(messageHeader.decode('utf-8').strip())
 
-        return {'header': messageHeader, 'data': clientSocket.recv(messageLength)}
+        return {'header': messageLength, 'data': clientSocket.recv(messageLength)}
 
     except:
 
@@ -51,18 +80,11 @@ while True:
                 continue
             socketsList.append(clientSocket)
 
-
             clients[clientSocket] = user
             print('Accepted new connection from {}:{}, username: {}'.format(*client_address, user['data'].decode('utf-8')))
 
-            playerList.append({"name": user['data'].decode('utf-8'), "IP": client_address})
+            playerList.append({"name": user['data'].decode('utf-8'), "IP": clientSocket, "Opp_IP": "null"})
 
-            for player in playerList:
-                message = "Available Players:\n Player: " + str(player["name"]) + "\n"
-                message = message.encode('utf-8')
-            # messageHeader = f"{len(message):<{HEADER_LENGTH}}".encode('utf-8')
-            # clientSocket.send(messageHeader + message)
-                clientSocket.send(message)
         else:
 
             message = receiveMessage(notifiedSocket)
@@ -79,15 +101,14 @@ while True:
             user = clients[notifiedSocket]
 
             print(f'Received message from {user["data"].decode("utf-8")}: {message["data"].decode("utf-8")}')
-            # clientSocket.send(user['header'] + user['data'] + message['header'] + message['data'])
-            negotiateMessage(clientSocket, message)
-            for clientSocket in clients:
 
-                if clientSocket != notifiedSocket:
-                    clientSocket.send(user['header'] + user['data'] + message['header'] + message['data'])
-
-    for notifiedSocket in exceptionSockets:
-
-        socketsList.remove(notifiedSocket)
-        del clients[notifiedSocket]
+            negotiateMessage(notifiedSocket, message['data'].decode("utf-8"), playerList)
+    #         for clientSocket in clients:
+    #             if clientSocket != notifiedSocket:
+    #                 clientSocket.send(user['header'] + user['data'] + message['header'] + message['data'])
+    #
+    # for notifiedSocket in exceptionSockets:
+    #
+    #     socketsList.remove(notifiedSocket)
+    #     del clients[notifiedSocket]
 
