@@ -1,3 +1,4 @@
+import random
 import socket
 import selectors
 import select
@@ -16,8 +17,13 @@ socketsList = [s]
 clients = {}
 playerList = []
 
+def flipCoin():
+    side = [1, 0]
+    return random.choice(side)
+
 def negotiateMessage(clientSocket, message, playerList):
     # This function takes our recieved messages, and parses the first letter to identify the traffic type
+    playerIndex = next((i for i, item in enumerate(playerList) if item["IP"] == clientSocket), None)
     if message[0] == "S":
 
         for player in playerList:
@@ -50,6 +56,20 @@ def negotiateMessage(clientSocket, message, playerList):
 
         playerList[playerIndex]['Opp_IP'].send(message.encode('utf-8'))
 
+    if message[0:4] == 'Yes':
+
+        result = flipCoin()
+
+        if result == 1:
+
+            playerList[playerIndex]['Opp_IP'].send("You've won the coin toss, your move".encode('utf-8'))
+
+            playerList[playerIndex]['IP'].send("You've lost the coin toss, your opponent moves first".encode('utf-8'))
+
+        else:
+            playerList[playerIndex]['IP'].send("You've won the coin toss, your move".encode('utf-8'))
+
+            playerList[playerIndex]['Opp_IP'].send("You've lost the coin toss, your opponent moves first".encode('utf-8'))
 
 def receiveMessage(clientSocket):
 
