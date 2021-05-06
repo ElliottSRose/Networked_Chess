@@ -26,6 +26,8 @@ def negotiateMessage(clientSocket, message, playerList):
     playerIndex = next((i for i, item in enumerate(playerList) if item["IP"] == clientSocket), None)
     if message[0] == "S":
 
+        clientSocket.send("Players waiting for an opponent:\n".encode("utf-8"))
+
         for player in playerList:
 
             message = "Available: " + str(player["name"]) + "\n"
@@ -43,33 +45,27 @@ def negotiateMessage(clientSocket, message, playerList):
         opponentIndex = next((i for i, item in enumerate(playerList) if item["name"] == opponent), None)
         # set opponent's opponent
         playerList[opponentIndex]['Opp_IP'] = clientSocket
-        # find player's index
-        playerIndex = next((i for i, item in enumerate(playerList) if item["IP"] == clientSocket), None)
         # set player's opponent
         playerList[playerIndex]['Opp_IP'] = playerList[opponentIndex]['IP']
         # Send request message to opponent to start game and start by default
         playerList[opponentIndex]['IP'].send("Play a game? Type Yes or No".encode('utf-8'))
-    # if no, disconnect players
-    if message[0] =='G':
 
-        playerIndex = next((i for i, item in enumerate(playerList) if item["IP"] == clientSocket), None)
-
-        playerList[playerIndex]['Opp_IP'].send(message.encode('utf-8'))
-
-    if message[0:4] == 'Yes':
+    elif message[0:4] == 'Yes':
 
         result = flipCoin()
 
         if result == 1:
 
             playerList[playerIndex]['Opp_IP'].send("You've won the coin toss, your move".encode('utf-8'))
-
             playerList[playerIndex]['IP'].send("You've lost the coin toss, your opponent moves first".encode('utf-8'))
 
         else:
             playerList[playerIndex]['IP'].send("You've won the coin toss, your move".encode('utf-8'))
-
             playerList[playerIndex]['Opp_IP'].send("You've lost the coin toss, your opponent moves first".encode('utf-8'))
+
+    else:
+        playerList[playerIndex]['Opp_IP'].send(message.encode("utf-8"))
+
 
 def receiveMessage(clientSocket):
 
