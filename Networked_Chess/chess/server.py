@@ -22,11 +22,13 @@ def negotiateMessage(clientSocket, message, playerList):
 
         for player in playerList:
 
-            message = "Waiting for opponent: " + str(player["name"]) + "\n"
+            message = "Available: " + str(player["name"]) + "\n"
 
             message = message.encode('utf-8')
 
             clientSocket.send(message)
+
+        clientSocket.send("Type C and opponent name to challenge(Ex: CJames to play James).".encode("utf-8"))
 
     elif message[0] == "C":
         # get name of opponent
@@ -84,6 +86,8 @@ while True:
             print('Accepted new connection from {}:{}, username: {}'.format(*client_address, user['data'].decode('utf-8')))
 
             playerList.append({"name": user['data'].decode('utf-8'), "IP": clientSocket, "Opp_IP": "null"})
+
+            clientSocket.send("You've been added to the waiting queue. Type S to see available players".encode("utf-8"))
 
         else:
 

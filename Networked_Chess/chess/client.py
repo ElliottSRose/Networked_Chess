@@ -27,8 +27,15 @@ clientSocket.send(playerHeader + playerName)
 def parseMessage(message, game=newGame):
     if message[0] == 'G':
         # update board and print
+        print(message[1:])
         newGame.move(message[1], int(message[2]), message[3], int(message[4]))
         newGame.printBoard()
+    if message[0:3] == "Yes":
+        newGame.printBoard()
+        print("Type G and move data to send move(Ex: Ge2e4)")
+    else:
+        print(message)
+
 
 # while True:
 def awaitInput():
@@ -57,7 +64,6 @@ while True:
                 print('\nDisconnected from server')
                 break
             else:
-                print(data.decode('utf-8')[1:])
                 parseMessage(data.decode('utf-8'))
         else:
             awaitInput()
