@@ -3,6 +3,7 @@ import socket
 import select
 import errno
 import sys
+import re
 
 HEADER_LENGTH = 10
 # IP = socket.gethostname()2
@@ -23,19 +24,37 @@ playerName = player.encode('utf-8')
 playerHeader = f"{len(playerName):<{HEADER_LENGTH}}".encode('utf-8')
 clientSocket.send(playerHeader + playerName)
 
+def letter_match(strg, search=re.compile(r'[^a-h]').search):
+    return not bool(search(strg))
+
+def number_match(strg, search=re.compile(r'[^1-8]').search):
+    return not bool(search(strg))
+
+def validateMove(message):
+    return letter_match(message[1]) and number_match(message[2]) and letter_match(message[3]) and number_match(message[4])
 
 def parseMessage(message, game=newGame):
+    valid = True
     if message[0] == 'G':
-        # update board and print
-        print(message[1:])
-        newGame.move(message[1], int(message[2]), message[3], int(message[4]))
-        newGame.printBoard()
-    if message[0:3] == "Yes":
+        if validateMove(message):
+            # update board and print
+            print(message[1:])
+            newGame.move(message[1], int(message[2]), message[3], int(message[4]))
+            newGame.printBoard()
+            if not(newGame.K.alive):
+                print("Black Wins")
+            elif not(newGame.k.alive):
+                print("White Wins")
+        else:
+            print("Invalid move")
+            valid = False
+    if message[7:10] == "won":
+        print(message)
         newGame.printBoard()
         print("Type G and move data to send move(Ex: Ge2e4)")
     else:
         print(message)
-
+    return valid
 
 # while True:
 def awaitInput():
@@ -43,10 +62,10 @@ def awaitInput():
     message = input(f'{player} > ')
 # If message is not empty - send it
     if message:
-        parseMessage(message)
-        message = message.encode('utf-8')
-        messageHeader = f"{len(message):<{HEADER_LENGTH}}".encode('utf-8')
-        clientSocket.send(messageHeader + message)
+        if parseMessage(message):
+            message = message.encode('utf-8')
+            messageHeader = f"{len(message):<{HEADER_LENGTH}}".encode('utf-8')
+            clientSocket.send(messageHeader + message)
 
 while True:
     # awaitInput()
