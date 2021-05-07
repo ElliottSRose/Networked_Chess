@@ -1,3 +1,4 @@
+import random
 import socket
 import selectors
 import select
@@ -16,9 +17,16 @@ socketsList = [s]
 clients = {}
 playerList = []
 
+def flipCoin():
+    side = [1, 0]
+    return random.choice(side)
+
 def negotiateMessage(clientSocket, message, playerList):
     # This function takes our recieved messages, and parses the first letter to identify the traffic type
+    playerIndex = next((i for i, item in enumerate(playerList) if item["IP"] == clientSocket), None)
     if message[0] == "S":
+
+        clientSocket.send("Players waiting for an opponent:\n".encode("utf-8"))
 
         for player in playerList:
 
@@ -37,28 +45,41 @@ def negotiateMessage(clientSocket, message, playerList):
         opponentIndex = next((i for i, item in enumerate(playerList) if item["name"] == opponent), None)
         # set opponent's opponent
         playerList[opponentIndex]['Opp_IP'] = clientSocket
-        # find player's index
-        playerIndex = next((i for i, item in enumerate(playerList) if item["IP"] == clientSocket), None)
         # set player's opponent
         playerList[playerIndex]['Opp_IP'] = playerList[opponentIndex]['IP']
         # Send request message to opponent to start game and start by default
         playerList[opponentIndex]['IP'].send("Play a game? Type Yes or No".encode('utf-8'))
-    # if no, disconnect players
-    if message[0] =='G':
 
-        playerIndex = next((i for i, item in enumerate(playerList) if item["IP"] == clientSocket), None)
+    elif message[0:4] == 'Yes':
 
-        playerList[playerIndex]['Opp_IP'].send(message.encode('utf-8'))
+        result = flipCoin()
+
+        if result == 1:
+
+            playerList[playerIndex]['Opp_IP'].send("You've won the coin toss, your move".encode('utf-8'))
+            playerList[playerIndex]['IP'].send("You've lost the coin toss, your opponent moves first".encode('utf-8'))
+
+        else:
+            playerList[playerIndex]['IP'].send("You've won the coin toss, your move".encode('utf-8'))
+            playerList[playerIndex]['Opp_IP'].send("You've lost the coin toss, your opponent moves first".encode('utf-8'))
+
+    else:
+        playerList[playerIndex]['Opp_IP'].send(message.encode("utf-8"))
 
 
 def receiveMessage(clientSocket):
+
     try:
         messageHeader = clientSocket.recv(HEADER_LENGTH)
+
         if not len(messageHeader):
             return False
         messageLength = int(messageHeader.decode('utf-8').strip())
+
         return {'header': messageLength, 'data': clientSocket.recv(messageLength)}
+
     except:
+
         return False
 
 def threaded_game_session(p1, p2, srvr):
@@ -72,7 +93,6 @@ def threaded_game_session(p1, p2, srvr):
 
         break
 
-
 while True:
 
     readSockets, _, exceptionSockets = select.select(socketsList, [], socketsList)
@@ -84,6 +104,7 @@ while True:
             clientSocket, client_address = s.accept()
 
             user = receiveMessage(clientSocket)
+
             if user is False:
                 continue
             socketsList.append(clientSocket)
@@ -113,4 +134,11 @@ while True:
             print(f'Received message from {user["data"].decode("utf-8")}: {message["data"].decode("utf-8")}')
 
             negotiateMessage(notifiedSocket, message['data'].decode("utf-8"), playerList)
-
+    #         for clientSocket in clients:
+    #             if clientSocket != notifiedSocket:
+    #                 clientSocket.send(user['header'] + user['data'] + message['header'] + message['data'])
+    #
+    # for notifiedSocket in exceptionSockets:
+    #
+    #     socketsList.remove(notifiedSocket)
+    #     del clients[notifiedSocket]
