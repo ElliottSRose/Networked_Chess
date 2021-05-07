@@ -60,7 +60,7 @@ def parseMessage(message, game=newGame):
 def awaitInput():
     # Wait for user to input a message
     message = input(f'{player} > ')
-# If message is not empty - send it
+    # If message is not empty - send it
     if message:
         if parseMessage(message):
             message = message.encode('utf-8')
@@ -74,7 +74,7 @@ while True:
     # Get the list sockets which are readable
     read_sockets, write_sockets, error_sockets = select.select(
         socket_list, [], [])
-    
+
     for sock in read_sockets:
         # incoming message from remote server
         if sock == clientSocket:
@@ -84,10 +84,9 @@ while True:
                 break
             else:
                 parseMessage(data.decode('utf-8'))
-        else: awaitInput()
-    else:
-        continue
-    break
+        else:
+            awaitInput()
+
 clientSocket.close()
 #     try:
 #         while True:

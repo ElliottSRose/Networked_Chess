@@ -206,5 +206,18 @@ class Board:
                 temp = '-'
             print('')
         print('    a   b   c   d   e   f   g   h')    
-        
-            
+
+    def convertBoard(self):
+        self.updateBoard()
+        j = 0
+        matrix = [['' for i in range(8)] for i in range(8)]
+        for i in range(7, 0, -1):
+            for key in self.columns:
+                for value in self.columns[key]:
+                    if value.y == i+1 and value.alive == True:
+                        temp = value.symbol
+                matrix[i][j] = temp
+                temp = ''
+            j+=1
+        return matrix
+
