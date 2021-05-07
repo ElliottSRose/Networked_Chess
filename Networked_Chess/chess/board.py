@@ -209,15 +209,17 @@ class Board:
 
     def convertBoard(self):
         self.updateBoard()
-        j = 0
+        k = 0
         matrix = [['' for i in range(8)] for i in range(8)]
-        for i in range(7, 0, -1):
+        for i in range(8, 0, -1):
+            j = 0
             for key in self.columns:
                 for value in self.columns[key]:
-                    if value.y == i+1 and value.alive == True:
+                    if value.y == i and value.alive == True:
                         temp = value.symbol
-                matrix[i][j] = temp
+                matrix[k][j] = temp
                 temp = ''
-            j+=1
+                j+=1
+            k+=1
         return matrix
 

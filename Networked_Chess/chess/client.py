@@ -86,6 +86,9 @@ while True:
                 parseMessage(data.decode('utf-8'))
         else:
             awaitInput()
+    else:
+        continue
+    break
 
 clientSocket.close()
 #     try:
