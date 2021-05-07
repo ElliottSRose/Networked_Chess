@@ -8,7 +8,7 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 
 pygame.display.set_caption("TCP Chess")
 clock = pygame.time.Clock()
-run = True
+
 
 board_image = pygame.image.load("images/board.png")
 bPawn = pygame.image.load("images/pawn_black.png")
@@ -66,6 +66,7 @@ def draw_board(matrix):
     pygame.display.update()
 
 def run_gui():
+    run = True
     while run:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
