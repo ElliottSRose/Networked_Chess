@@ -30,11 +30,13 @@ def negotiateMessage(clientSocket, message, playerList):
 
         for player in playerList:
 
-            message = "Available: " + str(player["name"]) + "\n"
+            if player["Available"] == "yes":
 
-            message = message.encode('utf-8')
+                message = "Available: " + str(player["name"]) + "\n"
 
-            clientSocket.send(message)
+                message = message.encode('utf-8')
+
+                clientSocket.send(message)
 
         clientSocket.send("Type C and opponent name to challenge(Ex: CJames to play James).".encode("utf-8"))
 
@@ -62,6 +64,13 @@ def negotiateMessage(clientSocket, message, playerList):
         else:
             playerList[playerIndex]['IP'].send("You've won the coin toss, your move".encode('utf-8'))
             playerList[playerIndex]['Opp_IP'].send("You've lost the coin toss, your opponent moves first".encode('utf-8'))
+
+        playerList[playerIndex]['Available'] = 'no'
+        opponentIndex = next((i for i, item in enumerate(playerList) if item["IP"] == playerList[playerIndex]['Opp_IP']), None)
+        playerList[opponentIndex]['Available'] = 'no'
+
+    elif message[0:4] == "exit":
+        del playerList[playerIndex]
 
     else:
         playerList[playerIndex]['Opp_IP'].send(message.encode("utf-8"))
@@ -112,7 +121,7 @@ while True:
             clients[clientSocket] = user
             print('Accepted new connection from {}:{}, username: {}'.format(*client_address, user['data'].decode('utf-8')))
 
-            playerList.append({"name": user['data'].decode('utf-8'), "IP": clientSocket, "Opp_IP": "null"})
+            playerList.append({"name": user['data'].decode('utf-8'), "IP": clientSocket, "Opp_IP": "null", "Available":"yes"})
 
             clientSocket.send("You've been added to the waiting queue. Type S to see available players".encode("utf-8"))
 
